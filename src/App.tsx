@@ -135,8 +135,17 @@ export function StudioWorkspace() {
     setConfirmDialog((prev) => ({ ...prev, isOpen: false }));
   };
 
-  // Sub-Toolbar Always Active for Automation Bar
-  const isDevAutoFillEnabled = true;
+  // Sub-Toolbar hanya aktif jika VITE_ENABLE_DEV_AUTOFILL diset "true" atau saat mode development lokal
+  const isDevAutoFillEnabled = (() => {
+    const envAutofill = import.meta.env.VITE_ENABLE_DEV_AUTOFILL;
+    if (envAutofill !== undefined && envAutofill !== "") {
+      return envAutofill === "true" || envAutofill === "1";
+    }
+    if (import.meta.env.VITE_APP_ENV === "production") {
+      return false;
+    }
+    return import.meta.env.DEV;
+  })();
 
   const isPT = form.jenis_badan_usaha === "PT";
 
@@ -356,11 +365,13 @@ export function StudioWorkspace() {
         </div>
       </header>
 
-      {/* ===================== SUB-TOOLBAR: QUICK AUTOMATION BAR (DEV TESTING) ===================== */}
-      <DevAutoFillBar
-        onLoadDummy={handleLoadDummy}
-        onRequestConfirm={openConfirm}
-      />
+      {/* ===================== SUB-TOOLBAR: QUICK AUTOMATION BAR (DEV TESTING ONLY) ===================== */}
+      {isDevAutoFillEnabled && (
+        <DevAutoFillBar
+          onLoadDummy={handleLoadDummy}
+          onRequestConfirm={openConfirm}
+        />
+      )}
 
       {/* ===================== DYNAMIC DESKTOP WORKSPACE LAYOUTS ===================== */}
 

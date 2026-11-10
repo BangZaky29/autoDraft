@@ -22,8 +22,115 @@ export async function generateDeedWord(form: AktaFormState, customFileName?: str
   }
   const arrayBuffer = await response.arrayBuffer();
 
-  // 2. Inisialisasi Docxtemplater
+  // 2. Inisialisasi Docxtemplater dengan sanitasi metadata (docProps)
   const zip = new PizZip(arrayBuffer);
+
+  // Bersihkan kurung kurawal liar pada metadata dokumen jika ada (misal pEPSON scanner artifacts)
+  ["docProps/core.xml", "docProps/app.xml", "docProps/custom.xml"].forEach((path) => {
+    const f = zip.file(path);
+    if (f) {
+      const sanitized = f.asText().replace(/\{|\}/g, "");
+      zip.file(path, sanitized);
+    }
+  });
+
+  // Manajemen Dinamis Baris Tabel Tanda Tangan:
+  // 1. Jika pendiri <= 2 orang, hapus baris tabel Word yang memuat ttd_pendiri 3 & 4 agar tidak ada baris/kolom kosong.
+  // 2. Jika pendiri > 4 orang (misal 5 atau 6 orang), gandakan baris tersebut untuk ttd_pendiri 5 & 6.
+  const docXmlFile = zip.file("word/document.xml");
+  if (docXmlFile) {
+    let docXml = docXmlFile.asText();
+    const trList = docXml.match(/<w:tr[\s\S]*?<\/w:tr>/g) || [];
+    const trPendiri2 = trList.find(
+      (tr) =>
+        tr.includes("ttd_pendiri") &&
+        !tr.includes("ttd_pendiri_1") &&
+        !tr.includes("ttd_pendiri_2")
+    );
+
+    if (trPendiri2) {
+      if (form.pendiri.length <= 2) {
+        // Hapus total baris kedua pendiri (slot 3 & 4) jika pendiri <= 2 orang
+        docXml = docXml.replace(trPendiri2, "");
+      } else if (form.pendiri.length > 4) {
+        // Gandakan baris untuk pendiri 5 & 6 jika lebih dari 4 orang
+        const trPendiri3 = trPendiri2
+          .replace(/<w:t>3<\/w:t>/g, "<w:t>5</w:t>")
+          .replace(/<w:t>4<\/w:t>/g, "<w:t>6</w:t>")
+          .replace(/\{ttd_pendiri_3\}/g, "{ttd_pendiri_5}")
+          .replace(/\{ttd_pendiri_4\}/g, "{ttd_pendiri_6}");
+        docXml = docXml.replace(trPendiri2, trPendiri2 + trPendiri3);
+      }
+      zip.file("word/document.xml", docXml);
+    }
+
+    // Saksi-Saksi (jika saksi > 2 orang, tambahkan baris saksi berikutnya)
+    if (form.saksi.length > 2) {
+      const trSaksi1 = trList.find((tr) => tr.includes("ttd_saksi_1") || tr.includes("ttd_saksi"));
+      if (trSaksi1) {
+        const trSaksi2 = trSaksi1
+          .replace(/<w:t>1<\/w:t>/g, "<w:t>3</w:t>")
+          .replace(/<w:t>2<\/w:t>/g, "<w:t>4</w:t>")
+          .replace(/\{ttd_saksi_1\}/g, "{ttd_saksi_3}")
+          .replace(/\{ttd_saksi_2\}/g, "{ttd_saksi_4}");
+        docXml = docXml.replace(trSaksi1, trSaksi1 + trSaksi2);
+      }
+    }
+
+    // 3. Kunci Halaman TTD (Page Break Terpadu):
+    // Memastikan Blok Tanda Tangan (TTD) selalu diawali dengan Page Break tepat sebelum tabel tanda tangan.
+    // Ini mengunci posisi TTD agar berada di halaman terakhir (Page 15 untuk CV, Page 23 untuk PT)
+    // dan TIDAK PERNAH terangkat ke halaman sebelumnya (Page 14 atau Page 22).
+    // Jika isi akta sebelumnya melebihi kapasitas halaman, akta akan split secara wajar ke halaman berikutnya (Page 16 / Page 24).
+    let tblPos = 0;
+    let targetTblPos = -1;
+    while ((tblPos = docXml.indexOf("<w:tbl>", tblPos)) !== -1) {
+      const endTbl = docXml.indexOf("</w:tbl>", tblPos);
+      if (endTbl === -1) break;
+      const tblXml = docXml.substring(tblPos, endTbl);
+      if (tblXml.includes("ttd_pendiri")) {
+        targetTblPos = tblPos;
+        break;
+      }
+      tblPos = endTbl + 8;
+    }
+
+    if (targetTblPos !== -1) {
+      const beforeTbl = docXml.substring(0, targetTblPos);
+      const tblAndAfter = docXml.substring(targetTblPos);
+
+      // Telusuri mundur paragraf kosong manual sebelum tabel dan bersihkan
+      let currentEnd = beforeTbl.length;
+      while (true) {
+        const lastPEnd = beforeTbl.lastIndexOf("</w:p>", currentEnd - 1);
+        if (lastPEnd === -1) break;
+        let lastPStart = -1;
+        let searchIdx = lastPEnd;
+        while ((searchIdx = beforeTbl.lastIndexOf("<w:p", searchIdx - 1)) !== -1) {
+          const nextChar = beforeTbl[searchIdx + 4];
+          if (nextChar === " " || nextChar === ">") {
+            lastPStart = searchIdx;
+            break;
+          }
+        }
+        if (lastPStart === -1) break;
+        const fullP = beforeTbl.substring(lastPStart, lastPEnd + 6);
+        if (!fullP.includes("<w:t>") && !fullP.includes("<w:t ")) {
+          currentEnd = lastPStart;
+        } else {
+          break;
+        }
+      }
+
+      // Sisipkan Page Break resmi tepat di batas tabel tanda tangan
+      const pageBreakXml =
+        '<w:p><w:pPr><w:spacing w:line="480" w:lineRule="auto"/><w:rPr><w:rFonts w:ascii="Courier New" w:hAnsi="Courier New" w:cs="Courier New"/><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr></w:pPr><w:r><w:br w:type="page"/></w:r></w:p>';
+      docXml = beforeTbl.substring(0, currentEnd) + pageBreakXml + tblAndAfter;
+    }
+
+    zip.file("word/document.xml", docXml);
+  }
+
   const doc = new Docxtemplater(zip, {
     paragraphLoop: true,
     linebreaks: true,
@@ -50,7 +157,7 @@ export async function generateDeedWord(form: AktaFormState, customFileName?: str
   const payload: Record<string, any> = {
     nama_perusahaan: form.nama_perusahaan.toUpperCase(),
     nomor_akta: form.nomor_akta || "   ",
-    nama_notaris: form.nama_notaris,
+    nama_notaris: form.nama_notaris || "....................",
     wilayah_notaris: form.wilayah_notaris,
 
     // Data Pihak Penerima Kuasa
@@ -130,7 +237,64 @@ export async function generateDeedWord(form: AktaFormState, customFileName?: str
     // Tutup Buku
     tgl_tutup_buku: form.tgl_tutup_buku,
     tgl_tutup_buku_terbilang: tanggalKeTerbilang(form.tgl_tutup_buku),
+
+    // Blok Tanda Tangan (TTD Akta Otentik - Notaris Lengkap Dengan Gelar)
+    ttd_notaris: form.nama_notaris || "....................",
+    ttd_pendiri_1: form.pendiri[0]?.nama_lengkap.toUpperCase() || "....................",
+    ttd_pendiri_2: form.pendiri[1]?.nama_lengkap.toUpperCase() || "....................",
+    ttd_pendiri_3: form.pendiri[2]?.nama_lengkap.toUpperCase() || "",
+    ttd_pendiri_4: form.pendiri[3]?.nama_lengkap.toUpperCase() || "",
+    ttd_pendiri_5: form.pendiri[4]?.nama_lengkap.toUpperCase() || "",
+    ttd_pendiri_6: form.pendiri[5]?.nama_lengkap.toUpperCase() || "",
+    ttd_kuasa: form.kuasa?.nama_lengkap ? form.kuasa.nama_lengkap.toUpperCase() : "",
+    ttd_saksi_1: form.saksi[0]?.nama_lengkap.toUpperCase() || "....................",
+    ttd_saksi_2: form.saksi[1]?.nama_lengkap.toUpperCase() || "....................",
+    ttd_saksi_3: form.saksi[2]?.nama_lengkap.toUpperCase() || "",
+    ttd_saksi_4: form.saksi[3]?.nama_lengkap.toUpperCase() || "",
   };
+
+  // Data Looping Berpasangan Dinamis untuk Tabel Word (Jika template memakai table row loop)
+  const ttd_pendiri_rows: Array<{
+    meterai: string;
+    pendiri_kiri: string;
+    pendiri_kanan: string;
+  }> = [];
+
+  for (let i = 0; i < form.pendiri.length; i += 2) {
+    ttd_pendiri_rows.push({
+      meterai: i === 0 ? "Materai 10.000\n\n\n\n" : "\n\n\n\n",
+      pendiri_kiri: form.pendiri[i]?.nama_lengkap.toUpperCase() || "",
+      pendiri_kanan: form.pendiri[i + 1]?.nama_lengkap.toUpperCase() || "",
+    });
+  }
+  payload.ttd_pendiri_rows = ttd_pendiri_rows;
+
+  const ttd_saksi_rows: Array<{
+    saksi_kiri: string;
+    saksi_kanan: string;
+  }> = [];
+
+  for (let i = 0; i < form.saksi.length; i += 2) {
+    ttd_saksi_rows.push({
+      saksi_kiri: form.saksi[i]?.nama_lengkap.toUpperCase() || "",
+      saksi_kanan: form.saksi[i + 1]?.nama_lengkap.toUpperCase() || "",
+    });
+  }
+  payload.ttd_saksi_rows = ttd_saksi_rows;
+
+  // Alias kompatibilitas spasi atau variasi penulisan tag (Notaris Lengkap Dengan Gelar)
+  payload[" nama_notaris "] = form.nama_notaris;
+  payload["nama_notaris"] = form.nama_notaris;
+  payload["ttd_notaris"] = form.nama_notaris;
+  payload[" ttd_notaris "] = form.nama_notaris;
+  payload[" ttd_pendiri_1 "] = payload.ttd_pendiri_1;
+  payload[" ttd_pendiri_2 "] = payload.ttd_pendiri_2;
+  payload[" ttd_pendiri_3 "] = payload.ttd_pendiri_3;
+  payload[" ttd_pendiri_4 "] = payload.ttd_pendiri_4;
+  payload[" ttd_saksi_1 "] = payload.ttd_saksi_1;
+  payload[" ttd_saksi_2 "] = payload.ttd_saksi_2;
+  payload[" ttd_saksi_3 "] = payload.ttd_saksi_3;
+  payload[" ttd_saksi_4 "] = payload.ttd_saksi_4;
 
   if (isPT) {
     // Variabel Spesifik PT

@@ -246,6 +246,97 @@ export const LiveDeedViewer: React.FC<LiveDeedViewerProps> = ({
             ---Segera setelah akta ini saya, Notaris bacakan kepada para penghadap dan para saksi, maka akta ini
             ditandatangani oleh para penghadap, para saksi, dan saya, Notaris.-----------------------
           </p>
+          <p className="text-left font-mono">
+            -Dibuat dengan...
+          </p>
+
+          {/* ===================== BLOK TANDA TANGAN (TTD AKTA OTENTIK) ===================== */}
+          <div className="pt-6 pb-6 space-y-8 text-slate-900 select-text font-mono">
+            
+            {/* Baris 1: Para Penghadap / Pendiri / Pemegang Saham (Dinamis Berpasangan) */}
+            <div className="space-y-4">
+              {Array.from({ length: Math.max(1, Math.ceil(form.pendiri.length / 2)) }).map((_, rowIdx) => {
+                const pKiri = form.pendiri[rowIdx * 2];
+                const pKanan = form.pendiri[rowIdx * 2 + 1];
+                const isFirstRow = rowIdx === 0;
+
+                return (
+                  <div key={rowIdx} className="grid grid-cols-2 gap-8 text-center items-end">
+                    {/* Kolom Kiri */}
+                    <div className="flex flex-col items-center">
+                      {isFirstRow && (
+                        <div className="mb-2 self-start pl-2">
+                          <div className="border border-dashed border-slate-400 bg-amber-50/70 text-slate-600 text-[10px] px-2 py-0.5 rounded font-sans italic">
+                            Materai 10.000
+                          </div>
+                        </div>
+                      )}
+                      <div className="h-16 flex items-end justify-center w-full">
+                        <span className="font-bold underline text-[11px] sm:text-xs tracking-wider uppercase">
+                          {pKiri?.nama_lengkap || "...................."}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Kolom Kanan */}
+                    <div className="flex flex-col items-center justify-end">
+                      <div className="h-16 flex items-end justify-center w-full">
+                        {pKanan ? (
+                          <span className="font-bold underline text-[11px] sm:text-xs tracking-wider uppercase">
+                            {pKanan.nama_lengkap}
+                          </span>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Baris 2: Saksi-Saksi Akta (Dinamis Berpasangan) */}
+            <div className="space-y-4 pt-2">
+              {Array.from({ length: Math.max(1, Math.ceil(form.saksi.length / 2)) }).map((_, rowIdx) => {
+                const sKiri = form.saksi[rowIdx * 2];
+                const sKanan = form.saksi[rowIdx * 2 + 1];
+
+                return (
+                  <div key={rowIdx} className="grid grid-cols-2 gap-8 text-center items-end">
+                    <div className="flex flex-col items-center justify-end">
+                      <div className="h-16 flex items-end justify-center w-full">
+                        <span className="font-bold underline text-[11px] sm:text-xs tracking-wider uppercase">
+                          {sKiri?.nama_lengkap || "...................."}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col items-center justify-end">
+                      <div className="h-16 flex items-end justify-center w-full">
+                        {sKanan ? (
+                          <span className="font-bold underline text-[11px] sm:text-xs tracking-wider uppercase">
+                            {sKanan.nama_lengkap}
+                          </span>
+                        ) : (
+                          <span className="font-bold underline text-[11px] sm:text-xs tracking-wider uppercase">
+                            ....................
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Baris 3: Pejabat Notaris (Center Alignment - Lengkap Dengan Gelar) */}
+            <div className="flex flex-col items-center justify-center pt-6 text-center">
+              <div className="h-20 flex items-end justify-center w-full">
+                <span className="font-bold underline text-[11px] sm:text-xs tracking-wider uppercase">
+                  {form.nama_notaris || "...................."}
+                </span>
+              </div>
+            </div>
+
+          </div>
         </div>
 
       </div>

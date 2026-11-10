@@ -69,7 +69,7 @@ export const Step4CapitalShares: React.FC<Step4Props> = ({
 
   return (
     <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/90 shadow-sm space-y-6">
-      
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
         <div>
@@ -88,7 +88,7 @@ export const Step4CapitalShares: React.FC<Step4Props> = ({
       {/* ===================== MODE PT ===================== */}
       {isPT ? (
         <div className="space-y-6">
-          
+
           {/* Card Input 3 Pilar Modal PT */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 rounded-xl bg-slate-50 border border-slate-200">
             <div className="space-y-1.5">
@@ -143,11 +143,10 @@ export const Step4CapitalShares: React.FC<Step4Props> = ({
           {/* Banner Validasi UU PT */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div
-              className={`p-3 rounded-xl border flex items-start gap-2.5 ${
-                isMinimumCapitalMet
-                  ? "bg-emerald-50 border-emerald-200 text-emerald-900"
-                  : "bg-red-50 border-red-200 text-red-900"
-              }`}
+              className={`p-3 rounded-xl border flex items-start gap-2.5 ${isMinimumCapitalMet
+                ? "bg-emerald-50 border-emerald-200 text-emerald-900"
+                : "bg-red-50 border-red-200 text-red-900"
+                }`}
             >
               {isMinimumCapitalMet ? (
                 <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
@@ -161,11 +160,10 @@ export const Step4CapitalShares: React.FC<Step4Props> = ({
             </div>
 
             <div
-              className={`p-3 rounded-xl border flex items-start gap-2.5 ${
-                isSharesBalanced
-                  ? "bg-emerald-50 border-emerald-200 text-emerald-900"
-                  : "bg-amber-50 border-amber-200 text-amber-900"
-              }`}
+              className={`p-3 rounded-xl border flex items-start gap-2.5 ${isSharesBalanced
+                ? "bg-emerald-50 border-emerald-200 text-emerald-900"
+                : "bg-amber-50 border-amber-200 text-amber-900"
+                }`}
             >
               {isSharesBalanced ? (
                 <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
@@ -316,7 +314,7 @@ export const Step4CapitalShares: React.FC<Step4Props> = ({
       )}
 
       {/* Action Footer: Generate & Download Word */}
-      <div className="pt-5 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div className="pt-5 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
         <button
           type="button"
           onClick={onPrev}
@@ -328,10 +326,10 @@ export const Step4CapitalShares: React.FC<Step4Props> = ({
         <button
           type="button"
           onClick={handleDownload}
-          className="px-8 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-heading font-extrabold text-sm shadow-xl hover:shadow-2xl flex items-center justify-center gap-2.5 transition-all transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer w-full sm:w-auto"
+          className="px-5 sm:px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 active:scale-95 text-white font-heading font-bold text-xs shadow-md hover:shadow-lg flex items-center justify-center gap-2 transition-all cursor-pointer w-full sm:w-auto"
         >
-          <FileDown className="w-5 h-5 text-amber-400" />
-          <span>Generate & Download Akta Word (.docx)</span>
+          <FileDown className="w-4 h-4 text-amber-400 shrink-0" />
+          <span>Download Akta (.docx)</span>
         </button>
       </div>
 

@@ -120,42 +120,53 @@ export const MasterNotariatCard: React.FC<MasterNotariatCardProps> = ({
 
   const currentSaksi = form.saksi[activeSaksiIndex] || form.saksi[0];
 
-  // 1. COLLAPSED VIEW (1-Line Summary Bar)
+  // 1. COLLAPSED VIEW (Minimalist Compact Summary Bar)
   if (isCollapsed) {
     return (
-      <div className="bg-white rounded-2xl p-3.5 sm:p-4 border border-slate-200/90 shadow-sm flex items-center justify-between gap-3 transition-all">
-        <div className="flex items-center gap-2.5 min-w-0">
-          <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-700 flex items-center justify-center shrink-0 border border-indigo-200/60">
-            <Scale className="w-4 h-4" />
+      <div 
+        onClick={onToggleCollapse}
+        className="bg-white rounded-xl px-3 py-2 sm:px-3.5 sm:py-2.5 border border-slate-200/80 shadow-2xs hover:border-slate-300 flex items-center justify-between gap-2.5 transition-all cursor-pointer select-none"
+        title="Klik untuk membuka panel konfigurasi Notaris & Saksi"
+      >
+        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+          {/* Icon Notariat Minimalis */}
+          <div className="w-7 h-7 rounded-lg bg-indigo-50/90 text-indigo-600 flex items-center justify-center shrink-0 border border-indigo-100/80">
+            <Scale className="w-3.5 h-3.5" />
           </div>
-          <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200 font-mono">
-                PASAL 38 & 40 UUJN
-              </span>
+
+          {/* Info Notaris & Staf */}
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-1.5 min-w-0">
               <span className="text-xs font-bold text-slate-800 truncate">
                 {form.nama_notaris || "Notaris Belum Diatur"}
               </span>
+              <span className="hidden sm:inline-flex text-[9px] font-bold px-1.5 py-0.2 rounded bg-indigo-50 text-indigo-600 border border-indigo-200/60 font-mono whitespace-nowrap shrink-0">
+                PASAL 38 & 40 UUJN
+              </span>
             </div>
-            <p className="text-[11px] text-slate-500 font-sans truncate">
-              Kuasa: <span className="font-semibold text-slate-700">{form.kuasa.nama_lengkap || "-"}</span> •{" "}
+            <p className="text-[10.5px] text-slate-500 font-sans truncate mt-0.5">
+              Kuasa: <span className="font-medium text-slate-700">{form.kuasa?.nama_lengkap || "-"}</span>
+              <span className="text-slate-300 mx-1">•</span>
               <span>{form.saksi.length} Saksi Akta</span>
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5 shrink-0">
-          {onToggleCollapse && (
-            <button
-              type="button"
-              onClick={onToggleCollapse}
-              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-all cursor-pointer"
-            >
-              <span>Buka Panel</span>
-              <ChevronDown className="w-3.5 h-3.5" />
-            </button>
-          )}
-        </div>
+        {/* Action Button: Buka Panel */}
+        {onToggleCollapse && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleCollapse();
+            }}
+            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100/90 hover:bg-slate-200 text-slate-600 hover:text-slate-900 text-[11px] sm:text-xs font-semibold transition-colors cursor-pointer shrink-0"
+            title="Buka panel konfigurasi notaris & saksi"
+          >
+            <span>Buka Panel</span>
+            <ChevronDown className="w-3 h-3 text-slate-400" />
+          </button>
+        )}
       </div>
     );
   }
@@ -179,7 +190,7 @@ export const MasterNotariatCard: React.FC<MasterNotariatCardProps> = ({
           </h2>
         </div>
 
-        <div className="flex items-center gap-2 self-start sm:self-auto">
+        <div className="w-full sm:w-auto flex items-center justify-between sm:justify-end gap-2 shrink-0 pt-0.5 sm:pt-0">
           <button
             type="button"
             onClick={handleSaveProfileToCloud}
@@ -194,14 +205,16 @@ export const MasterNotariatCard: React.FC<MasterNotariatCardProps> = ({
             <span className="sm:hidden">Simpan</span>
           </button>
 
+          {/* Button Tutup Panel (Sejajar di sebelah kanan tombol Simpan) */}
           {onToggleCollapse && (
             <button
               type="button"
               onClick={onToggleCollapse}
-              className="p-1.5 rounded-xl hover:bg-slate-100 text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
-              title="Lipat Panel Notariat"
+              className="inline-flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-100/90 hover:bg-slate-200 text-slate-600 hover:text-slate-900 text-xs font-semibold transition-colors cursor-pointer shrink-0"
+              title="Tutup / Lipat panel konfigurasi Notaris & Saksi"
             >
-              <ChevronUp className="w-4 h-4" />
+              <span>Tutup Panel</span>
+              <ChevronUp className="w-3.5 h-3.5 text-slate-500" />
             </button>
           )}
         </div>

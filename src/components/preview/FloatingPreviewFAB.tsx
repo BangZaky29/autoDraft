@@ -6,7 +6,7 @@ interface FABProps {
   badgeCount?: number;
 }
 
-export const FloatingPreviewFAB: React.FC<FABProps> = ({ onClick, badgeCount }) => {
+export const FloatingPreviewFAB: React.FC<FABProps> = ({ onClick }) => {
   return (
     <div className="fixed bottom-4 right-4 z-40 lg:hidden pointer-events-auto">
       <button
@@ -14,16 +14,12 @@ export const FloatingPreviewFAB: React.FC<FABProps> = ({ onClick, badgeCount }) 
         onClick={onClick}
         aria-label="Lihat Live Preview Akta"
         title="Buka Simulasi Akta Otentik"
-        className="w-12 h-12 rounded-full bg-slate-900/95 hover:bg-slate-900 active:scale-90 text-white shadow-2xl border border-slate-700 flex items-center justify-center transition-all cursor-pointer backdrop-blur-xs relative"
+        className="h-11 px-4 rounded-full bg-slate-900/95 hover:bg-slate-900 active:scale-95 text-white shadow-2xl border border-slate-700/90 flex items-center gap-2 transition-all cursor-pointer backdrop-blur-xs select-none ring-1 ring-slate-700/50 hover:ring-indigo-500/40"
       >
-        <Eye className="w-5 h-5 text-amber-400" />
-        
-        {/* Badge angka pendiri di sudut lingkaran */}
-        {badgeCount !== undefined && badgeCount > 0 && (
-          <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-indigo-600 text-white text-[10px] font-mono font-bold flex items-center justify-center border-2 border-slate-900 shadow-xs">
-            {badgeCount}
-          </span>
-        )}
+        <span className="font-semibold text-xs tracking-wide text-slate-100">
+          Preview
+        </span>
+        <Eye className="w-4 h-4 text-amber-400 shrink-0" />
       </button>
     </div>
   );

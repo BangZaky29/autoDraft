@@ -10,6 +10,7 @@ import {
   LayoutSwitcherDropdown,
   DesktopLayoutPreset,
 } from "./components/layout/LayoutSwitcherDropdown";
+import { UserProfileDropdown } from "./components/layout/UserProfileDropdown";
 import { DraftHistoryModal } from "./components/modals/DraftHistoryModal";
 import { DownloadDeedModal } from "./components/modals/DownloadDeedModal";
 import { SaveDraftModal } from "./components/modals/SaveDraftModal";
@@ -30,11 +31,8 @@ import { generateDeedWord } from "./lib/docxGenerator";
 import { AktaFormState } from "./types/akta.types";
 import {
   Scale,
-  History,
-  LogOut,
   CheckCircle2,
   Sparkles,
-  Trash2,
 } from "lucide-react";
 
 interface ConfirmState {
@@ -295,7 +293,7 @@ export function StudioWorkspace() {
             ) : null}
           </div>
 
-          {/* Right Action Group: Visual Layout Switcher + Konfigurasi Notariat + Riwayat Draf + Reset + Logout */}
+          {/* Right Action Group: Visual Layout Switcher + Konfigurasi Notariat + Profil Pengguna (Google Auth) */}
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             {/* Visual Layout Switcher Trigger Button & Snap Popover (Desktop only) */}
             <div className="hidden lg:block">
@@ -329,37 +327,14 @@ export function StudioWorkspace() {
               </span>
             </button>
 
-            {/* Riwayat Draf */}
-            <button
-              type="button"
-              onClick={() => setIsHistoryModalOpen(true)}
-              className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-800/90 hover:bg-slate-700 border border-slate-700 text-slate-200 hover:text-white text-xs font-semibold transition-all cursor-pointer shadow-xs"
-              title="Buka riwayat draf tersimpan"
-            >
-              <History className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
-              <span className="hidden sm:inline">Riwayat Draf</span>
-            </button>
-
-            {/* Button Reset Form (Di sebelah Riwayat Draf, Icon di Mobile) */}
-            <button
-              type="button"
-              onClick={handleClearAll}
-              className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-800/90 hover:bg-rose-950/60 border border-slate-700 hover:border-rose-800/60 text-slate-300 hover:text-rose-300 text-xs font-semibold transition-all cursor-pointer shadow-xs"
-              title="Kosongkan seluruh isian formulir akta (Reset)"
-            >
-              <Trash2 className="w-3.5 h-3.5 text-rose-400 shrink-0" />
-              <span className="hidden sm:inline">Reset</span>
-            </button>
-
-            {/* Logout */}
-            <button
-              type="button"
-              onClick={handleLogoutClick}
-              title="Keluar Akun"
-              className="p-2 rounded-xl hover:bg-red-950/50 text-slate-400 hover:text-red-400 border border-transparent hover:border-red-900/40 transition-colors cursor-pointer"
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
+            {/* Profil Pengguna & Dropdown Popover (Google Auth) */}
+            <UserProfileDropdown
+              onOpenProfile={() => setIsNotariatPanelOpen(true)}
+              onLogout={handleLogoutClick}
+              notaryName={form.nama_notaris}
+              notaryWilayah={form.wilayah_notaris}
+              kuasaName={form.kuasa?.nama_lengkap}
+            />
           </div>
 
         </div>
@@ -406,6 +381,8 @@ export function StudioWorkspace() {
                 form={form}
                 onSaveDraft={() => setIsSaveDraftModalOpen(true)}
                 onRequestDownload={() => setIsDownloadModalOpen(true)}
+                onOpenHistory={() => setIsHistoryModalOpen(true)}
+                onClearAll={handleClearAll}
                 isSaving={isSaving}
                 lastSaved={lastSaved}
               />
@@ -445,6 +422,8 @@ export function StudioWorkspace() {
                 form={form}
                 onSaveDraft={() => setIsSaveDraftModalOpen(true)}
                 onRequestDownload={() => setIsDownloadModalOpen(true)}
+                onOpenHistory={() => setIsHistoryModalOpen(true)}
+                onClearAll={handleClearAll}
                 isSaving={isSaving}
                 lastSaved={lastSaved}
               />
@@ -496,6 +475,8 @@ export function StudioWorkspace() {
                 form={form}
                 onSaveDraft={() => setIsSaveDraftModalOpen(true)}
                 onRequestDownload={() => setIsDownloadModalOpen(true)}
+                onOpenHistory={() => setIsHistoryModalOpen(true)}
+                onClearAll={handleClearAll}
                 isSaving={isSaving}
                 lastSaved={lastSaved}
               />
@@ -540,6 +521,8 @@ export function StudioWorkspace() {
                   form={form}
                   onSaveDraft={() => setIsSaveDraftModalOpen(true)}
                   onRequestDownload={() => setIsDownloadModalOpen(true)}
+                  onOpenHistory={() => setIsHistoryModalOpen(true)}
+                  onClearAll={handleClearAll}
                   isSaving={isSaving}
                   lastSaved={lastSaved}
                 />
@@ -561,6 +544,8 @@ export function StudioWorkspace() {
         form={form}
         onSaveDraft={() => setIsSaveDraftModalOpen(true)}
         onRequestDownload={() => setIsDownloadModalOpen(true)}
+        onOpenHistory={() => setIsHistoryModalOpen(true)}
+        onClearAll={handleClearAll}
         isSaving={isSaving}
         lastSaved={lastSaved}
       />

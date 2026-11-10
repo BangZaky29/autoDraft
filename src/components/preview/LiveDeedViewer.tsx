@@ -1,7 +1,7 @@
 import React from "react";
 import { AktaFormState } from "../../types/akta.types";
 import { formatRibuan, rupiahKeTerbilang, tanggalKeTerbilang, angkaKeTerbilang, capitalizeFirst, padRtRw } from "../../lib/terbilang";
-import { FileDown, Eye, Save, CheckCircle2 } from "lucide-react";
+import { FileDown, Eye, Save, CheckCircle2, History, Trash2 } from "lucide-react";
 import { generateDeedWord } from "../../lib/docxGenerator";
 
 interface LiveDeedViewerProps {
@@ -9,12 +9,15 @@ interface LiveDeedViewerProps {
   onClose?: () => void;
   onSaveDraft?: () => void;
   onRequestDownload?: () => void;
+  onOpenHistory?: () => void;
+  onClearAll?: () => void;
   isSaving?: boolean;
   lastSaved?: Date | null;
   className?: string;
   onHeaderTouchStart?: React.TouchEventHandler;
   onHeaderTouchMove?: React.TouchEventHandler;
   onHeaderTouchEnd?: React.TouchEventHandler;
+  onHeaderPointerDown?: React.PointerEventHandler;
 }
 
 export const LiveDeedViewer: React.FC<LiveDeedViewerProps> = ({
@@ -22,12 +25,15 @@ export const LiveDeedViewer: React.FC<LiveDeedViewerProps> = ({
   onClose,
   onSaveDraft,
   onRequestDownload,
+  onOpenHistory,
+  onClearAll,
   isSaving = false,
   lastSaved = null,
   className = "rounded-2xl border border-slate-200/90 shadow-sm",
   onHeaderTouchStart,
   onHeaderTouchMove,
   onHeaderTouchEnd,
+  onHeaderPointerDown,
 }) => {
   const isPT = form.jenis_badan_usaha === "PT";
   const lembarModalDasar = form.nominal_per_saham > 0 ? Math.floor(form.modal_dasar / form.nominal_per_saham) : 0;
@@ -47,52 +53,80 @@ export const LiveDeedViewer: React.FC<LiveDeedViewerProps> = ({
 
       {/* Top Bar Viewer */}
       <div
+        onPointerDown={onHeaderPointerDown}
         onTouchStart={onHeaderTouchStart}
         onTouchMove={onHeaderTouchMove}
         onTouchEnd={onHeaderTouchEnd}
-        className="px-4 py-3 bg-slate-900 text-white flex items-center justify-between shrink-0 select-none cursor-grab active:cursor-grabbing"
+        className="px-3 sm:px-4 py-2 sm:py-2.5 bg-slate-900 text-white flex items-center justify-between shrink-0 select-none cursor-grab active:cursor-grabbing border-b border-slate-800"
       >
-        <div className="flex items-center gap-2">
-          <Eye className="w-4 h-4 text-amber-400" />
-          <span className="font-heading font-bold text-xs uppercase tracking-wide truncate max-w-[140px] sm:max-w-none">
+        {/* Judul: Akta Otentik (dijamin tidak terpotong) */}
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          <Eye className="w-4 h-4 text-amber-400 shrink-0" />
+          <span className="font-heading font-bold text-xs uppercase tracking-wider text-slate-100 whitespace-nowrap">
             Akta Otentik
           </span>
         </div>
 
-        <div className="flex items-center gap-2">
-          {/* Button Simpan Draf tepat di sebelah button Download .docx */}
+        {/* Action Group: 4 Tombol Berbentuk Persegi Panjang */}
+        <div
+          onPointerDown={(e) => e.stopPropagation()}
+          className="flex items-center gap-1 sm:gap-1.5"
+        >
+          {/* 1. Icon Riwayat Draf */}
+          {onOpenHistory && (
+            <button
+              type="button"
+              onClick={onOpenHistory}
+              className="px-2.5 sm:px-3 py-1 sm:py-1.5 min-w-[36px] sm:min-w-0 rounded-lg bg-slate-800/90 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 text-xs font-semibold transition-all shadow-xs cursor-pointer inline-flex items-center justify-center gap-1.5"
+              title="Buka Riwayat Draf"
+            >
+              <History className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+              <span className="hidden md:inline">Riwayat</span>
+            </button>
+          )}
+
+          {/* 2. Icon Save Draft */}
           {onSaveDraft && (
             <button
               type="button"
               onClick={onSaveDraft}
               disabled={isSaving}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 text-xs font-bold transition-all shadow-xs cursor-pointer disabled:opacity-50"
+              className="px-2.5 sm:px-3 py-1 sm:py-1.5 min-w-[36px] sm:min-w-0 rounded-lg bg-slate-800/90 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 text-xs font-bold transition-all shadow-xs cursor-pointer disabled:opacity-50 inline-flex items-center justify-center gap-1.5"
               title="Simpan draf akta ke database Supabase"
             >
-              <Save className={`w-3.5 h-3.5 ${isSaving ? "animate-spin text-amber-400" : "text-emerald-400"}`} />
-              <span className="hidden sm:inline">{isSaving ? "Menyimpan..." : "Simpan Draf"}</span>
+              <Save
+                className={`w-3.5 h-3.5 shrink-0 ${isSaving ? "animate-spin text-amber-400" : "text-emerald-400"
+                  }`}
+              />
+              <span className="hidden md:inline">
+                {isSaving ? "Menyimpan..." : "Simpan Draf"}
+              </span>
             </button>
           )}
 
-          {/* Button Download .docx (Membuka popup edit nama berkas jika onRequestDownload tersedia) */}
+          {/* 3. Icon Clear / Reset Form */}
+          {onClearAll && (
+            <button
+              type="button"
+              onClick={onClearAll}
+              className="px-2.5 sm:px-3 py-1 sm:py-1.5 min-w-[36px] sm:min-w-0 rounded-lg bg-slate-800/90 hover:bg-rose-950/60 text-slate-300 hover:text-rose-300 border border-slate-700 hover:border-rose-800/60 text-xs font-semibold transition-all shadow-xs cursor-pointer inline-flex items-center justify-center gap-1.5"
+              title="Kosongkan seluruh isian formulir akta (Reset)"
+            >
+              <Trash2 className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+              <span className="hidden md:inline">Reset</span>
+            </button>
+          )}
+
+          {/* 4. Icon Download .docx */}
           <button
             type="button"
             onClick={onRequestDownload || handleDownload}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
+            className="px-3 sm:px-3.5 py-1 sm:py-1.5 min-w-[42px] sm:min-w-0 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer inline-flex items-center justify-center gap-1.5"
+            title="Download Dokumen Akta (.docx)"
           >
-            <FileDown className="w-3.5 h-3.5" />
-            <span>Download .docx</span>
+            <FileDown className="w-3.5 h-3.5 shrink-0" />
+            <span className="hidden sm:inline">Download .docx</span>
           </button>
-
-          {onClose && (
-            <button
-              type="button"
-              onClick={onClose}
-              className="text-slate-400 hover:text-white p-1 rounded-lg cursor-pointer"
-            >
-              ✕
-            </button>
-          )}
         </div>
       </div>
 
@@ -252,7 +286,7 @@ export const LiveDeedViewer: React.FC<LiveDeedViewerProps> = ({
 
           {/* ===================== BLOK TANDA TANGAN (TTD AKTA OTENTIK) ===================== */}
           <div className="pt-6 pb-6 space-y-8 text-slate-900 select-text font-mono">
-            
+
             {/* Baris 1: Para Penghadap / Pendiri / Pemegang Saham (Dinamis Berpasangan) */}
             <div className="space-y-4">
               {Array.from({ length: Math.max(1, Math.ceil(form.pendiri.length / 2)) }).map((_, rowIdx) => {
